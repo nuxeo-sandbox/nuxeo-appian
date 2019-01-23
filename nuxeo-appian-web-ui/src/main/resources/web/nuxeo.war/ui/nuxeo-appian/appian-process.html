@@ -1,0 +1,143 @@
+<!--
+@license
+(C) Copyright Nuxeo Corp. (http://nuxeo.com/)
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!--
+A button element for starting an Appian process
+
+Example:
+
+    <appian-process document="[[document]]"></appian-process>
+
+@group Nuxeo UI
+@element appian-process
+-->
+<dom-module id="appian-process">
+    <template>
+        <style>
+            :host {
+                display: inline-block;
+            }
+        </style>
+
+        <nuxeo-operation id="appianProcesses" op="Repository.PageProvider" auto on-response="_parseProcesses" params="[[_processParams()]]"></nuxeo-operation>
+        <nuxeo-operation id="startAppianProcess" op="Document.StartAppianProcess" input="[[document.uid]]" params="[[_params(process)]]"></nuxeo-operation>
+
+        <template is="dom-if" if="[[_isAvailable(document)]]">
+            <div class="action" on-click="_toggleDialog">
+                <paper-icon-button class$="[[synced]]" icon="[[icon]]" noink></paper-icon-button>
+                <span class="label" hidden$="[[!showLabel]]">[[label]]</span>
+            </div>
+            <paper-tooltip>[[label]]</paper-tooltip>
+        </template>
+
+        <nuxeo-dialog id="dialog" with-backdrop>
+            <h2>Start Appian Process</h2>
+
+            <nuxeo-select id="process" label="Process" selected="{{process}}" attr-for-selected="key">
+                <dom-repeat items="[[processes]]" as="item">
+                    <template>
+                        <paper-item key="[[item.uid]]">[[item.properties.dc:title]]</paper-item>
+                    </template>
+                </dom-repeat>
+            </nuxeo-select>
+
+            <div class="buttons">
+                <paper-button dialog-dismiss>Cancel</paper-button>
+                <paper-button class="primary" disabled="[[!process]]" dialog-confirm on-click="_startProcess">Start</paper-button>
+            </div>
+        </nuxeo-dialog>
+
+
+    </template>
+    <script>
+        Polymer({
+            is: 'appian-process',
+            behaviors: [Nuxeo.I18nBehavior, Nuxeo.FiltersBehavior],
+            properties: {
+
+                document: {
+                    type: Object
+                },
+
+                icon: {
+                    type: String,
+                    value: 'appian:logo'
+                },
+
+                processes: {
+                    type: Array
+                },
+
+                process: {
+                    type: String,
+                },
+
+                label: {
+                    type: String,
+                    value: "Start Appian Process"
+                },
+
+                showLabel: {
+                    type: Boolean,
+                    value: false
+                }
+            },
+
+            _isAvailable: function (document) {
+                return document;
+            },
+
+            _toggleDialog: function () {
+                this.$.dialog.toggle();
+            },
+
+            _params: function (process) {
+                return {
+                    "process": process
+                };
+            },
+
+            _processParams: function () {
+                return {
+                    "providerName": "appian_processes"
+                }
+            },
+
+            _parseProcesses: function (response) {
+                this.processes = response.detail.response.entries;
+            },
+
+            _startProcess: function () {
+                if (this.document) {
+                    this.$.startAppianProcess.execute().then(() => {
+                        this.fire('document-updated');
+                        this.fire('notify', {
+                            message: "Process Started"
+                        });
+                    }).catch((error) => {
+                        console.log(error);
+                        this.configured = "error";
+                        this.fire('notify', {
+                            message: "Start Process Failed: " + error
+                        });
+                    });
+                }
+            },
+
+        });
+    </script>
+</dom-module>

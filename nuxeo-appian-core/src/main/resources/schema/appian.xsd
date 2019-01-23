@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<xs:schema targetNamespace="http://www.nuxeo.org/ecm/schemas/appian/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:nxs="http://www.nuxeo.org/ecm/schemas/appian/">
+
+  <xs:element name="synchronized" type="xs:dateTime" />
+  <xs:element name="state" type="xs:string" />
+  <xs:element name="processes" type="nxs:uriList" />
+  <xs:element name="links" type="nxs:uriList" />
+
+  <xs:simpleType name="uriList">
+    <xs:list itemType="xs:anyURI" />
+  </xs:simpleType>
+
+</xs:schema>

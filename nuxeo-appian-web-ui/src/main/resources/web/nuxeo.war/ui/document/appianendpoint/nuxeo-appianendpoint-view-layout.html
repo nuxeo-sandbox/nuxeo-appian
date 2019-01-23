@@ -1,0 +1,109 @@
+<!--
+(C) Copyright 2019 Nuxeo (http://nuxeo.com/) and others.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<!--
+`nuxeo-appianendpoint-view-layout`
+@group Nuxeo UI
+@element nuxeo-appianendpoint-view-layout
+-->
+<dom-module id="nuxeo-appianendpoint-view-layout">
+  <template>
+    <style>
+      *[role=widget] {
+        padding: 5px;
+      }
+    </style>
+
+    <paper-card heading="[[document.properties.dc:title]]" elevation="0">
+      <div class="card-content layout horizontal wrap">
+        <div class="layout vertical flex">
+          <div role="widget">
+            <label>Title</label>
+            <div>[[document.properties.dc:title]]</div>
+          </div>
+
+          <div role="widget">
+            <label>Description</label>
+            <div>[[document.properties.dc:description]]</div>
+          </div>
+
+          <div role="widget">
+            <label>Path</label>
+            <div>[[document.properties.appianendpoint:path]]</div>
+          </div>
+        </div>
+        <div class="layout vertical flex">
+          <nuxeo-data-table role="widget" label="Headers" items="{{document.properties.appianendpoint:headers}}">
+            <nuxeo-data-table-column name="Key">
+              <template>
+                [[item.key]]
+              </template>
+            </nuxeo-data-table-column>
+
+            <nuxeo-data-table-column name="Value">
+              <template>
+                [[item.value]]
+              </template>
+            </nuxeo-data-table-column>
+
+            <nuxeo-data-table-form>
+              <template>
+                <nuxeo-input value="{{item.key}}" label="Key" type="text"></nuxeo-input>
+                <nuxeo-input value="{{item.value}}" label="Value" type="text"></nuxeo-input>
+              </template>
+            </nuxeo-data-table-form>
+          </nuxeo-data-table>
+
+          <nuxeo-data-table role="widget" label="Query Parameters" items="{{document.properties.appianendpoint:queryParameters}}">
+            <nuxeo-data-table-column name="Key">
+              <template>
+                [[item.key]]
+              </template>
+            </nuxeo-data-table-column>
+
+            <nuxeo-data-table-column name="Value">
+              <template>
+                [[item.value]]
+              </template>
+            </nuxeo-data-table-column>
+
+            <nuxeo-data-table-form>
+              <template>
+                <nuxeo-input value="{{item.key}}" label="Key" type="text"></nuxeo-input>
+                <nuxeo-input value="{{item.value}}" label="Value" type="text"></nuxeo-input>
+              </template>
+            </nuxeo-data-table-form>
+          </nuxeo-data-table>
+        </div>
+      </div>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'nuxeo-appianendpoint-view-layout',
+      behaviors: [Nuxeo.LayoutBehavior],
+      properties: {
+
+        /**
+         * @doctype AppianEndpoint
+         */
+        document: {
+          type: Object,
+        },
+
+      }
+    });
+  </script>
+</dom-module>

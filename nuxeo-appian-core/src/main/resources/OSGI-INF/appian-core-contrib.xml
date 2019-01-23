@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<component name="org.nuxeo.platform.appian.CoreExtensions" version="1.0">
+
+  <require>org.nuxeo.ecm.tags.schemas</require>
+  <require>org.nuxeo.ecm.core.CoreExtensions</require>
+  <require>org.nuxeo.ecm.core.LifecycleCoreExtensions</require>
+
+
+  <extension target="org.nuxeo.ecm.core.schema.TypeService" point="schema">
+    <schema name="appianEndpoint" prefix="appianendpoint" src="schema/appianEndpoint.xsd"/>
+    <schema name="appian" prefix="appian" src="schema/appian.xsd"/>
+  </extension>
+
+  <extension target="org.nuxeo.ecm.core.schema.TypeService" point="doctype">
+    <facet name="Appian">
+      <schema name="appian"/>
+    </facet>
+
+    <doctype name="AppianEndpoint" extends="Document">
+      <schema name="common"/>
+      <schema name="dublincore"/>
+      <schema name="uid"/>
+      <schema name="appianEndpoint"/>
+      <facet name="Commentable"/>
+      <facet name="Versionable"/>
+      <facet name="NXTag"/>
+    </doctype>
+
+    <doctype name="Folder" append="true">
+      <subtypes>
+        <type>AppianEndpoint</type>
+      </subtypes>
+    </doctype>
+    <doctype name="OrderedFolder" append="true">
+      <subtypes>
+        <type>AppianEndpoint</type>
+      </subtypes>
+    </doctype>
+    <doctype name="Workspace" append="true">
+      <subtypes>
+        <type>AppianEndpoint</type>
+      </subtypes>
+    </doctype>
+  </extension>
+
+  <extension target="org.nuxeo.ecm.platform.types.TypeService" point="types">
+    <type id="AppianEndpoint">
+      <label>AppianEndpoint</label>
+      <default-view>view_documents</default-view>
+      <icon>/icons/appian.png</icon>
+      <bigIcon>/icons/appian_big.png</bigIcon>
+      <category>SimpleDocument</category>
+      <description>AppianEndpoint.description</description>
+      <layouts mode="any">
+        <layout>heading</layout>
+      </layouts>
+      <layouts mode="edit">
+        <layout>heading</layout>
+        <layout>dublincore</layout>
+      </layouts>
+      <layouts mode="drive">
+        <layout>heading</layout>
+        <layout>dublincore</layout>
+      </layouts>
+    </type>
+  </extension>
+
+  <extension target="org.nuxeo.ecm.core.lifecycle.LifeCycleService" point="types">
+    <types>
+      <type name="AppianEndpoint">default</type>
+    </types>
+  </extension>
+
+  <extension target="org.nuxeo.ecm.platform.query.api.PageProviderService" point="providers">
+    <coreQueryPageProvider name="appian_processes">
+      <property name="maxResults">PAGE_SIZE</property>
+      <pattern>
+        SELECT * FROM AppianEndpoint WHERE ecm:mixinType != 'HiddenInNavigation' AND
+        ecm:isTrashed = 0 AND
+        ecm:isProxy = 0
+      </pattern>
+      <sort ascending="true" column="dc:title"/>
+      <pageSize>25</pageSize>
+    </coreQueryPageProvider>
+  </extension>
+
+</component>
