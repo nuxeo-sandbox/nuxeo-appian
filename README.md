@@ -24,7 +24,7 @@ mvn clean install
 Editor properties:
 
 ```
-# URL to editor api.js service (required)
+# Base URL for Appian instance
 appian.base.url=http://appian
 # Credentials
 appian.username=user1
