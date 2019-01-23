@@ -1,12 +1,12 @@
-# Nuxeo ONLYOFFICE Integration
+# Nuxeo Appian Connector
 
-[![Build Status](https://qa.nuxeo.org/jenkins/buildStatus/icon?job=Sandbox/sandbox_nuxeo-onlyoffice-master)](https://qa.nuxeo.org/jenkins/view/Sandbox/job/Sandbox/job/sandbox_nuxeo-onlyoffice-master/)
+[![Build Status](https://qa.nuxeo.org/jenkins/buildStatus/icon?job=Sandbox/sandbox_nuxeo-appian-master)](https://qa.nuxeo.org/jenkins/view/Sandbox/job/Sandbox/job/sandbox_nuxeo-appian-master/)
 
-In-browser integration of Nuxeo Platform and [ONLYOFFICE](https://www.onlyoffice.com/).
+Connectors for [Nuxeo](https://www.nuxeo.com/) Platform and [Appian](https://www.appian.com/).
 
 ## Dependencies
 
-[ONLYOFFICE](https://www.onlyoffice.com/) Document Server (Run a [Docker](https://github.com/ONLYOFFICE/Docker-DocumentServer) image)
+[Appian](https://www.appian.com/) case management design suite.
 
 ## Build and Install
 
@@ -15,7 +15,7 @@ Build with maven (at least 3.3)
 ```
 mvn clean install
 ```
-> Package built here: `nuxeo-onlyoffice-package/target`
+> Package built here: `nuxeo-appian-package/target`
 
 > Install with `nuxeoctl mp-install <package>`
 
@@ -25,59 +25,10 @@ Editor properties:
 
 ```
 # URL to editor api.js service (required)
-onlyoffice.url.api=http://onlyoffice/web-apps/apps/api/documents/api.js
-# Create version on save (optional, default: false)
-onlyoffice.version.save=true|false
-```
-
-Conversion properties (Optional):
-
-```
-# URL to conversion service (see ONLYOFFICE docs)
-onlyoffice.url.conversion=http://onlyoffice/ConvertService.ashx
-# Number of millisecond to wait between polling async request
-onlyoffice.conversion.wait=1000
-```
-
-> (!) When using Docker, use an accessible hostname for the IP URLs.
-
-## (Optional) Use Conversion Service
-
-Invoke the conversion service to transform between a variety of content types.  By default, the [office2pdf contribution](/nuxeo-onlyoffice-core/src/main/resources/OSGI-INF/onlyoffice-conversion-contrib.xml) will support PDF as a destination type.  See the [ONLYOFFICE Conversion API](https://api.onlyoffice.com/editors/conversionapi) for a full conversion matrix.
-
-### Conversion Parameters
-
-|Key      |Description|Allowable Values|
-|---------|-----------|----------------|
-|async    |Async Processing|true, false     |
-|srcType  |Source Type|allowable type  |
-|destType |Dest Type|allowable type  |
-|codePage |Code Page|code page ref   |
-|delimiter|Delimiter|delimiter ref   |
-|thumbnail|Thumbnail|true, false, (height):(width):(aspect)|
-
-### Rendition example
-
-```xml
-  <extension target="org.nuxeo.ecm.platform.rendition.service.RenditionService" point="renditionDefinitions">
-    <renditionDefinition name="onlyoffice">
-      <label>label.rendition.onlyofficepdf</label>
-      <icon>/icons/note.gif</icon>
-      <contentType>application/pdf</contentType>
-      <operationChain>onlyofficePdf</operationChain>
-      <storeByDefault>false</storeByDefault>
-    </renditionDefinition>
-  </extension>
-
-  <extension target="org.nuxeo.ecm.core.operation.OperationServiceComponent" point="chains">
-    <chain id="onlyofficePdf">
-      <operation id="Context.PopBlob"/>
-      <operation id="Blob.RunConverter">
-        <param name="converter" type="string">office2pdf</param>
-        <param name="parameters" type="properties">async=false</param>
-      </operation>
-    </chain>
-  </extension>
+appian.base.url=http://appian
+# Credentials
+appian.username=user1
+appian.password=credentials
 ```
 
 ## Support
