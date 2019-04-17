@@ -4,7 +4,9 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.core.MediaType;
 
@@ -18,12 +20,12 @@ import org.nuxeo.ecm.automation.core.annotations.Operation;
 import org.nuxeo.ecm.automation.core.annotations.OperationMethod;
 import org.nuxeo.ecm.automation.core.annotations.Param;
 import org.nuxeo.ecm.automation.core.collectors.DocumentModelCollector;
+import org.nuxeo.ecm.automation.core.util.StringList;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.IdRef;
 import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.ecm.core.api.model.Property;
-import org.nuxeo.platform.appian.model.AppianRequest;
 import org.nuxeo.platform.appian.model.AppianResponse;
 import org.nuxeo.runtime.api.Framework;
 import org.slf4j.Logger;
@@ -60,6 +62,9 @@ public class StartAppianProcess {
 
     @Param(name = "process", required = true)
     protected String process;
+    
+    @Param(name = "reviewers", required = false)
+    protected StringList reviewers;
 
     protected Client getClient() {
         if (client == null) {
@@ -97,9 +102,15 @@ public class StartAppianProcess {
     }
 
     private boolean invokeEndpoint(DocumentModel input, DocumentModel process, Map<String, Object> params) {
-        AppianRequest request = new AppianRequest();
+        Map<String, Object> request = new HashMap<>();
 
-        request.setVariable("documentIds", Collections.singletonList(input.getId()));
+        request.put("documentIds", Collections.singletonList(input.getId()));
+        if (reviewers != null && !reviewers.isEmpty()) {
+            List<String> reviewerList = reviewers.stream().collect(Collectors.toList());
+            request.put("reviewers", reviewerList);
+        } else {
+            request.put("reviewers", null);
+        }
 
         String base = Framework.getProperty("appian.base.url", "https://appian");
 
@@ -125,7 +136,7 @@ public class StartAppianProcess {
         boolean success = false;
         try {
             ObjectMapper mapper = new ObjectMapper();
-            String body = mapper.writerFor(AppianRequest.class).writeValueAsString(request);
+            String body = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(request);
 
             builder.type(MediaType.APPLICATION_JSON);
             ClientResponse response = builder.post(ClientResponse.class, body);
