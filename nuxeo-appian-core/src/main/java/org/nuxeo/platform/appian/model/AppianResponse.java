@@ -59,15 +59,13 @@ public class AppianResponse {
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("AppianResponse [pp=")
-               .append(pp)
-               .append(", pm=")
-               .append(pm)
-               .append(", pv=")
-               .append(pv)
-               .append("]");
-        return builder.toString();
+        return "AppianResponse [pp=" +
+                pp +
+                ", pm=" +
+                pm +
+                ", pv=" +
+                pv +
+                "]";
     }
 
 }

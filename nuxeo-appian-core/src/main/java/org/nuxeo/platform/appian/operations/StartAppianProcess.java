@@ -2,11 +2,7 @@ package org.nuxeo.platform.appian.operations;
 
 import java.io.InputStream;
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import javax.ws.rs.core.MediaType;
 
@@ -28,8 +24,6 @@ import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.ecm.core.api.model.Property;
 import org.nuxeo.platform.appian.model.AppianResponse;
 import org.nuxeo.runtime.api.Framework;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.jersey.api.client.Client;
@@ -38,6 +32,8 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -45,7 +41,7 @@ import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 @Operation(id = StartAppianProcess.ID, category = Constants.CAT_DOCUMENT, label = "Start Appian Process", description = "Start a named Appian process with the input document.")
 public class StartAppianProcess {
 
-    protected static final Logger LOG = LoggerFactory.getLogger(StartAppianProcess.class);
+    protected static final Logger LOG = LogManager.getLogger(StartAppianProcess.class);
 
     public static final String ID = "Document.StartAppianProcess";
 
@@ -106,7 +102,7 @@ public class StartAppianProcess {
 
         request.put("documentIds", Collections.singletonList(input.getId()));
         if (reviewers != null && !reviewers.isEmpty()) {
-            List<String> reviewerList = reviewers.stream().collect(Collectors.toList());
+            List<String> reviewerList = new ArrayList<>(reviewers);
             request.put("reviewers", reviewerList);
         } else {
             request.put("reviewers", null);
@@ -145,7 +141,7 @@ public class StartAppianProcess {
                         Framework.getProperty("appian.username"), base + path);
             } else {
                 success = true;
-                AppianResponse result = null;
+                AppianResponse result;
                 try (InputStream in = response.getEntityInputStream()) {
                     result = mapper.readerFor(AppianResponse.class).readValue(in);
                 }
