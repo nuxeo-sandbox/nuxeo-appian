@@ -1,12 +1,15 @@
 package org.nuxeo.platform.appian.operations;
 
-import java.io.InputStream;
 import java.io.Serializable;
 import java.util.*;
 
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.client.*;
+import jakarta.ws.rs.core.MediaType;
 
+import jakarta.ws.rs.core.Response;
 import org.apache.commons.lang3.StringUtils;
+import org.glassfish.jersey.client.ClientProperties;
+import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.nuxeo.ecm.automation.AutomationService;
 import org.nuxeo.ecm.automation.OperationContext;
 import org.nuxeo.ecm.automation.OperationException;
@@ -26,12 +29,8 @@ import org.nuxeo.platform.appian.model.AppianResponse;
 import org.nuxeo.runtime.api.Framework;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
-import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
+
+import org.glassfish.jersey.client.ClientConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -64,13 +63,19 @@ public class StartAppianProcess {
 
     protected Client getClient() {
         if (client == null) {
-            ClientConfig cc = new DefaultClientConfig();
-            cc.getProperties().put(ClientConfig.PROPERTY_FOLLOW_REDIRECTS, true);
-            client = Client.create(cc);
-
             String user = Framework.getProperty("appian.username");
             String pass = Framework.getProperty("appian.password");
-            client.addFilter(new HTTPBasicAuthFilter(user, pass));
+
+            HttpAuthenticationFeature feature = HttpAuthenticationFeature.basicBuilder()
+                    .nonPreemptive()
+                    .credentials(user, pass)
+                    .build();
+
+            ClientConfig clientConfig = new ClientConfig();
+            clientConfig.property(ClientProperties.FOLLOW_REDIRECTS, true);
+            clientConfig.register(feature) ;
+
+            client = ClientBuilder.newClient(clientConfig);
         }
         return client;
     }
@@ -111,16 +116,16 @@ public class StartAppianProcess {
         String base = Framework.getProperty("appian.base.url", "https://appian");
 
         Serializable path = process.getPropertyValue("appianendpoint:path");
-        WebResource resource = getClient().resource(base + path);
+        WebTarget target = getClient().target(base + path);
         Property query = process.getPropertyObject("appianendpoint", "queryParameters");
         if (query != null) {
             for (int i = 0; i < query.size(); i++) {
                 Property p = query.get(i);
-                resource.queryParam((String) p.get("key").getValue(), (String) p.get("value").getValue());
+                target.queryParam((String) p.get("key").getValue(), p.get("value").getValue());
             }
         }
 
-        WebResource.Builder builder = resource.accept(MediaType.WILDCARD);
+        Invocation.Builder builder = target.request(MediaType.WILDCARD);
         Property headers = process.getPropertyObject("appianendpoint", "headers");
         if (headers != null) {
             for (int i = 0; i < headers.size(); i++) {
@@ -133,22 +138,20 @@ public class StartAppianProcess {
         try {
             ObjectMapper mapper = new ObjectMapper();
             String body = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(request);
-
-            builder.type(MediaType.APPLICATION_JSON);
-            ClientResponse response = builder.post(ClientResponse.class, body);
-            if (response.getStatus() < 200 || response.getStatus() >= 400) {
-                LOG.warn("Unable to reach Appian API: {} {}@{}", response.getStatusInfo(),
-                        Framework.getProperty("appian.username"), base + path);
-            } else {
-                success = true;
-                AppianResponse result;
-                try (InputStream in = response.getEntityInputStream()) {
-                    result = mapper.readerFor(AppianResponse.class).readValue(in);
+            try (Response response = builder.post(Entity.entity(body, MediaType.APPLICATION_JSON))) {
+                if (response.getStatus() < 200 || response.getStatus() >= 400) {
+                    LOG.warn("Unable to reach Appian API: {} {}@{}", response.getStatusInfo(),
+                            Framework.getProperty("appian.username"), base + path);
+                } else {
+                    success = true;
+                    AppianResponse result;
+                    result = mapper.readerFor(AppianResponse.class).readValue(response.getEntity().toString());
+                    String uuid = (String) result.getProcessInstance().get("uuid");
+                    params.put("processes", Collections.singletonList(uuid));
+                    LOG.warn("Started process with ID: {} ({})", uuid, result);
                 }
-                String uuid = (String) result.getProcessInstance().get("uuid");
-                params.put("processes", Collections.singletonList(uuid));
-                LOG.warn("Started process with ID: {} ({})", uuid, result);
-            }
+            };
+
         } catch (Exception ex) {
             LOG.warn("Error connecting to Appian API", ex);
         }
